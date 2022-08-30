@@ -1,7 +1,9 @@
 ﻿using FFXIVOpcodeWizard.PacketDetection;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Text;
+using System.Text.Json;
 
 namespace FFXIVOpcodeWizard.ViewModels
 {
@@ -48,29 +50,38 @@ namespace FFXIVOpcodeWizard.ViewModels
             var clientSb = new StringBuilder();
 
             var format = this.numberFormatSelector.SelectedFormat;
-
+            var client = new Dictionary<string, int>();
+            var server = new Dictionary<string, int>();
             foreach (var scanner in this.registry.AsList())
             {
                 if (scanner.Opcode == 0) continue;
 
-                var sb = scanner.PacketSource == PacketSource.Client ? clientSb : serverSb;
+                //var sb = scanner.PacketSource == PacketSource.Client ? clientSb : serverSb;
 
-                sb.Append(scanner.PacketName).Append(" = ")
-                    .Append(Util.NumberToString(scanner.Opcode, format)).Append(",").Append(Affix);
-                if (scanner.Comment.Text != null)
+                //sb.Append(scanner.PacketName).Append(" = ")
+                //    .Append(Util.NumberToString(scanner.Opcode, format)).Append(",").Append(Affix);
+                //if (scanner.Comment.Text != null)
+                //{
+                //    sb.Append(" (").Append(scanner.Comment).Append(")");
+                //}
+
+                //sb.AppendLine();
+                if (scanner.PacketSource == PacketSource.Client)
                 {
-                    sb.Append(" (").Append(scanner.Comment).Append(")");
+                    client.Add(scanner.PacketName, scanner.Opcode);
                 }
-
-                sb.AppendLine();
+                else {
+                    server.Add(scanner.PacketName, scanner.Opcode);
+                }
             }
 
             var resultSb = new StringBuilder();
-            resultSb.Append("// Server Zone");
+            resultSb.AppendLine("// Server Zone");
+            resultSb.AppendLine(JsonSerializer.Serialize(server,new JsonSerializerOptions() { WriteIndented =true}));
+            //resultSb.Append(serverSb);
             resultSb.AppendLine();
-            resultSb.Append(serverSb);
-            resultSb.AppendLine();
-            resultSb.Append("// Client Zone");
+            resultSb.AppendLine("// Client Zone");
+            resultSb.AppendLine(JsonSerializer.Serialize(client, new JsonSerializerOptions() { WriteIndented = true }));
             resultSb.AppendLine();
             resultSb.Append(clientSb);
             resultSb.AppendLine();
